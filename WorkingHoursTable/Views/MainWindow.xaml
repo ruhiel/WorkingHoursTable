@@ -8,21 +8,87 @@
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:vm="clr-namespace:WorkingHoursTable.ViewModels"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
-        Title="MainWindow" Height="1000" Width="450">
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:rp="clr-namespace:Reactive.Bindings.Interactivity;assembly=ReactiveProperty.WPF"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="WorkingHoursTable"
+        TitleCharacterCasing="Normal"
+        Height="1000" Width="450">
     <mah:MetroWindow.DataContext>
         <vm:MainWindowViewModel>
         </vm:MainWindowViewModel>
     </mah:MetroWindow.DataContext>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="8*"/>
         </Grid.RowDefinitions>
-        <DataGrid Grid.Row="0" ItemsSource="{Binding DateList}" AutoGenerateColumns="False">
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+                <Button Command="{Binding PrevMonthCommand}">
+                    <iconPacks:PackIconForkAwesome Kind="ArrowLeft" VerticalAlignment="Center"/>
+                </Button>
+                <TextBlock Text="先月" VerticalAlignment="Center" Margin="5,0,5,0"/>
+                <ComboBox Controls:TextBoxHelper.Watermark="対象年月" ItemsSource="{Binding YearList}" SelectedItem="{Binding SelectedYear.Value, Mode=TwoWay}"  Margin="0,0,5,0">
+                </ComboBox>
+                <TextBlock Text="年" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <ComboBox Controls:TextBoxHelper.Watermark="対象月" ItemsSource="{Binding MonthList}" SelectedItem="{Binding SelectedMonth.Value, Mode=TwoWay}" Margin="0,0,5,0">
+                </ComboBox>
+                <TextBlock Text="月" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <TextBlock Text="来月" VerticalAlignment="Center" Margin="5,0,5,0"/>
+                <Button Command="{Binding NextMonthCommand}">
+                    <iconPacks:PackIconForkAwesome Kind="ArrowRight" VerticalAlignment="Center"/>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+        <DataGrid Grid.Row="1" ItemsSource="{Binding DateList}" AutoGenerateColumns="False" Visibility="{Binding TableVisibility.Value}">
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <!-- ヘッダー文字をセンタリングする -->
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="TextBlock.TextAlignment" Value="Center"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="日付" Binding="{Binding Base, StringFormat={}{0:MM/dd}}" IsReadOnly="True"/>
-                <DataGridTextColumn Header="開始" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" IsReadOnly="True"/>
-                <DataGridTextColumn Header="終了" Binding="{Binding End, StringFormat={}{0:HH:mm}}" IsReadOnly="True"/>
+                <DataGridTextColumn Width="150" Header="日付" Binding="{Binding Base, StringFormat={}{0:MM/dd(ddd)}, ConverterCulture=ja-JP}" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Base.DayOfWeek}" Value="6">
+                                    <Setter Property="Foreground" Value="Blue" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Base.DayOfWeek}" Value="0">
+                                    <Setter Property="Foreground" Value="Red" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Width="150" Header="開始" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Width="150" Header="終了" Binding="{Binding End, StringFormat={}{0:HH:mm}}" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
+        <mah:ProgressRing Grid.Row="1" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="True" Visibility="{Binding NowProgress.Value}"/>
     </Grid>
 </Controls:MetroWindow>

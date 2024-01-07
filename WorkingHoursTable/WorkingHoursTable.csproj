@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro" Version="3.0.0-alpha0476" />
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
     <PackageReference Include="Prism.Core" Version="9.0.271-pre" />
     <PackageReference Include="ReactiveProperty.WPF" Version="9.4.0-pre8" />
   </ItemGroup>
