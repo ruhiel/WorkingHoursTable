@@ -13,7 +13,7 @@
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="WorkingHoursTable"
         TitleCharacterCasing="Normal"
-        Height="1000" Width="450">
+        Height="1000" Width="470">
     <mah:MetroWindow.DataContext>
         <vm:MainWindowViewModel>
         </vm:MainWindowViewModel>
