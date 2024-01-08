@@ -30,5 +30,19 @@ namespace WorkingHoursTable.Models
             get => _End;
             set => SetProperty(ref _End, value);
         }
+
+        private DateTime? _StartView;
+        public DateTime? StartView
+        {
+            get => _StartView;
+            set => SetProperty(ref _StartView, value);
+        }
+
+        private DateTime? _EndView;
+        public DateTime? EndView
+        {
+            get => _EndView;
+            set => SetProperty(ref _EndView, value);
+        }
     }
 }

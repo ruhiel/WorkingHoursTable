@@ -20,7 +20,7 @@
     </mah:MetroWindow.DataContext>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="80"/>
             <RowDefinition Height="8*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Vertical">
@@ -38,6 +38,13 @@
                 <TextBlock Text="来月" VerticalAlignment="Center" Margin="5,0,5,0"/>
                 <Button Command="{Binding NextMonthCommand}">
                     <iconPacks:PackIconForkAwesome Kind="ArrowRight" VerticalAlignment="Center"/>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5">
+                <TextBlock Text="30分刻みで表示" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <mah:ToggleSwitch OffContent="しない" OnContent="する" IsOn="{Binding ViewSwitch.Value}" IsEnabled="{Binding ClipboardEnable.Value}"/>
+                <Button Command="{Binding ClipboardCommand}" IsEnabled="{Binding ClipboardEnable.Value}">
+                    <iconPacks:PackIconTypicons Kind="Clipboard" />
                 </Button>
             </StackPanel>
         </StackPanel>
@@ -71,7 +78,7 @@
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Width="150" Header="開始" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" IsReadOnly="True">
+                <DataGridTextColumn Width="150" Header="開始" Binding="{Binding StartView, StringFormat={}{0:HH:mm}}" IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="{x:Type TextBlock}">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -79,7 +86,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Width="150" Header="終了" Binding="{Binding End, StringFormat={}{0:HH:mm}}" IsReadOnly="True">
+                <DataGridTextColumn Width="150" Header="終了" Binding="{Binding EndView, StringFormat={}{0:HH:mm}}" IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="{x:Type TextBlock}">
                             <Setter Property="VerticalAlignment" Value="Center" />

@@ -39,8 +39,11 @@ namespace WorkingHoursTable.ViewModels
         public ReactiveProperty<int> SelectedMonth { get; } = new ReactiveProperty<int>();
         public ReactiveProperty<Visibility> TableVisibility { get; } = new ReactiveProperty<Visibility>();
         public ReactiveProperty<Visibility> NowProgress { get; } = new ReactiveProperty<Visibility>();
+        public ReactiveProperty<bool> ClipboardEnable { get; }
         public ReactiveCommand PrevMonthCommand { get; } = new ReactiveCommand();
         public ReactiveCommand NextMonthCommand { get; } = new ReactiveCommand();
+        public ReactiveProperty<bool> ViewSwitch { get; } = new ReactiveProperty<bool>(true);
+        public ReactiveCommand ClipboardCommand { get; } = new ReactiveCommand();
         public MainWindowViewModel()
         {
             YearList.AddAll(Enumerable.Range(2000, DateTime.Now.Year - 2000 + 1));
@@ -49,6 +52,8 @@ namespace WorkingHoursTable.ViewModels
             SelectedMonth.Value = DateTime.Now.Month;
 
             NowProgress = TableVisibility.Select(x => x == Visibility.Visible ? Visibility.Hidden : Visibility.Visible).ToReactiveProperty();
+
+            ClipboardEnable = TableVisibility.Select(x => x == Visibility.Visible ? true : false).ToReactiveProperty();
 
             SetTable(SelectedYear.Value, SelectedMonth.Value);
 
@@ -68,6 +73,25 @@ namespace WorkingHoursTable.ViewModels
                 SelectedYear.Value = selected.Year;
                 SelectedMonth.Value = selected.Month;
                 SetTable(SelectedYear.Value, SelectedMonth.Value);
+            });
+
+            ViewSwitch.Subscribe(x =>
+            {
+                foreach (var item in DateList)
+                {
+                    SetView(item);
+                }
+            });
+
+            ClipboardCommand.Subscribe(x =>
+            {
+                Clipboard.SetText(string.Join("\n",
+                    DateList.Select(x =>
+                        string.Join("\t",
+                            x.Base.ToString("MM/dd(ddd)"),
+                            x.StartView.HasValue ? x.StartView.Value.ToString("HH:mm") : string.Empty,
+                            x.EndView.HasValue ? x.EndView.Value.ToString("HH:mm") : string.Empty
+                ))));
             });
         }
 
@@ -134,10 +158,48 @@ namespace WorkingHoursTable.ViewModels
 
                 model.End = collect.Events.Where(x => x.InstanceId == EndEventID).MaxBy(y => y.TimeWritten)?.TimeWritten;
 
+                SetView(model);
+
                 DateList.Add(model);
             }
 
             TableVisibility.Value = Visibility.Visible;
+        }
+
+        private void SetView(DateModel model)
+        {
+            model.StartView = model.Start.HasValue ? new DateTime(model.Start.Value.Ticks) : null;
+            model.EndView = model.End.HasValue ? new DateTime(model.End.Value.Ticks) : null;
+
+            if (!ViewSwitch.Value)
+            {
+                return;
+            }
+
+            if (model.StartView != null)
+            {
+                if (model.StartView.Value.Minute >= 30)
+                {
+                    model.StartView = model.StartView.Value.AddMinutes(-model.StartView.Value.Minute);
+                    model.StartView = model.StartView.Value.AddMinutes(30);
+                }
+                else
+                {
+                    model.StartView = model.StartView.Value.AddMinutes(-model.StartView.Value.Minute);
+                }
+            }
+            if (model.EndView != null)
+            {
+                if (model.EndView.Value.Minute >= 30)
+                {
+                    model.EndView = model.EndView.Value.AddMinutes(-model.EndView.Value.Minute);
+                    model.EndView = model.EndView.Value.AddMinutes(30);
+                }
+                else
+                {
+                    model.EndView = model.EndView.Value.AddMinutes(-model.EndView.Value.Minute);
+                }
+            }
         }
     }
 }
