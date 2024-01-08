@@ -44,6 +44,7 @@ namespace WorkingHoursTable.ViewModels
         public ReactiveCommand NextMonthCommand { get; } = new ReactiveCommand();
         public ReactiveProperty<bool> ViewSwitch { get; } = new ReactiveProperty<bool>(true);
         public ReactiveCommand ClipboardCommand { get; } = new ReactiveCommand();
+        public IDialogCoordinator? MahAppsDialogCoordinator { get; set; }
         public MainWindowViewModel()
         {
             YearList.AddAll(Enumerable.Range(2000, DateTime.Now.Year - 2000 + 1));
@@ -83,7 +84,7 @@ namespace WorkingHoursTable.ViewModels
                 }
             });
 
-            ClipboardCommand.Subscribe(x =>
+            ClipboardCommand.Subscribe(async x =>
             {
                 Clipboard.SetText(string.Join("\n",
                     DateList.Select(x =>
@@ -92,6 +93,11 @@ namespace WorkingHoursTable.ViewModels
                             x.StartView.HasValue ? x.StartView.Value.ToString("HH:mm") : string.Empty,
                             x.EndView.HasValue ? x.EndView.Value.ToString("HH:mm") : string.Empty
                 ))));
+
+                if (MahAppsDialogCoordinator != null)
+                {
+                    await MahAppsDialogCoordinator.ShowMessageAsync(this, "クリップボード", "クリップボードにコピーしました。");
+                }
             });
         }
 

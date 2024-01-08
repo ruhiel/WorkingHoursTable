@@ -13,9 +13,14 @@
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="WorkingHoursTable"
         TitleCharacterCasing="Normal"
+        xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+        Dialog:DialogParticipation.Register="{Binding}"
         Height="1000" Width="470">
     <mah:MetroWindow.DataContext>
         <vm:MainWindowViewModel>
+            <vm:MainWindowViewModel.MahAppsDialogCoordinator>
+                <Dialog:DialogCoordinator/>
+            </vm:MainWindowViewModel.MahAppsDialogCoordinator>
         </vm:MainWindowViewModel>
     </mah:MetroWindow.DataContext>
     <Grid>
