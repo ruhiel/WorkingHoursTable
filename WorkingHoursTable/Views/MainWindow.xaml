@@ -34,10 +34,20 @@
                     <iconPacks:PackIconForkAwesome Kind="ArrowLeft" VerticalAlignment="Center"/>
                 </Button>
                 <TextBlock Text="先月" VerticalAlignment="Center" Margin="5,0,5,0"/>
-                <ComboBox Controls:TextBoxHelper.Watermark="対象年月" ItemsSource="{Binding YearList}" SelectedItem="{Binding SelectedYear.Value, Mode=TwoWay}"  Margin="0,0,5,0">
+                <ComboBox Controls:TextBoxHelper.Watermark="対象年月" ItemsSource="{Binding YearList}" SelectedItem="{Binding SelectedYear.Value, Mode=TwoWay}" Margin="0,0,5,0">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="SelectionChanged">
+                            <rp:EventToReactiveCommand Command="{Binding RefleshCommand}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
                 </ComboBox>
                 <TextBlock Text="年" VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <ComboBox Controls:TextBoxHelper.Watermark="対象月" ItemsSource="{Binding MonthList}" SelectedItem="{Binding SelectedMonth.Value, Mode=TwoWay}" Margin="0,0,5,0">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="SelectionChanged">
+                            <rp:EventToReactiveCommand Command="{Binding RefleshCommand}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
                 </ComboBox>
                 <TextBlock Text="月" VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <TextBlock Text="来月" VerticalAlignment="Center" Margin="5,0,5,0"/>

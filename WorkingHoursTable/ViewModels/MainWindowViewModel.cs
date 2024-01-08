@@ -13,6 +13,8 @@ using MahApps.Metro.Controls.Dialogs;
 using System.Diagnostics.Metrics;
 using System.Windows;
 using System.Reactive.Linq;
+using System.Windows.Documents;
+using System.Windows.Data;
 
 namespace WorkingHoursTable.ViewModels
 {
@@ -29,7 +31,7 @@ namespace WorkingHoursTable.ViewModels
             public List<EventLogEntry> Events { get; set; } = new List<EventLogEntry>();
         }
 
-        public ObservableCollection<DateModel> DateList { get; } = new ObservableCollection<DateModel>();
+        public TransactionDispatchObservableCollection<DateModel> DateList { get; } = new TransactionDispatchObservableCollection<DateModel>(Application.Current.Dispatcher);
 
         public ObservableCollection<int> YearList { get; } = new ObservableCollection<int>();
 
@@ -44,9 +46,13 @@ namespace WorkingHoursTable.ViewModels
         public ReactiveCommand NextMonthCommand { get; } = new ReactiveCommand();
         public ReactiveProperty<bool> ViewSwitch { get; } = new ReactiveProperty<bool>(true);
         public ReactiveCommand ClipboardCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand RefleshCommand { get; } = new ReactiveCommand();
         public IDialogCoordinator? MahAppsDialogCoordinator { get; set; }
         public MainWindowViewModel()
         {
+            // 複数スレッドからコレクション操作できるようにする
+            BindingOperations.EnableCollectionSynchronization(DateList, new object());
+
             YearList.AddAll(Enumerable.Range(2000, DateTime.Now.Year - 2000 + 1));
             SelectedYear.Value = DateTime.Now.Year;
             MonthList.AddAll(Enumerable.Range(1, 12));
@@ -58,13 +64,17 @@ namespace WorkingHoursTable.ViewModels
 
             SetTable(SelectedYear.Value, SelectedMonth.Value);
 
+            RefleshCommand.Subscribe(x =>
+            {
+                SetTable(SelectedYear.Value, SelectedMonth.Value);
+            });
+
             PrevMonthCommand.Subscribe(x =>
             {
                 var selected = new DateTime(SelectedYear.Value, SelectedMonth.Value, 1);
                 selected = selected.AddMonths(-1);
                 SelectedYear.Value = selected.Year;
                 SelectedMonth.Value = selected.Month;
-                SetTable(SelectedYear.Value, SelectedMonth.Value);
             });
 
             NextMonthCommand.Subscribe(x =>
@@ -73,7 +83,6 @@ namespace WorkingHoursTable.ViewModels
                 selected = selected.AddMonths(1);
                 SelectedYear.Value = selected.Year;
                 SelectedMonth.Value = selected.Month;
-                SetTable(SelectedYear.Value, SelectedMonth.Value);
             });
 
             ViewSwitch.Subscribe(x =>
@@ -103,7 +112,6 @@ namespace WorkingHoursTable.ViewModels
 
         private async void SetTable(int year, int month)
         {
-            DateList.Clear();
             TableVisibility.Value = Visibility.Hidden;
 
             var collectList = new List<Collect>();
@@ -153,21 +161,25 @@ namespace WorkingHoursTable.ViewModels
                 }
             });
 
-
-            foreach (var collect in collectList)
+            await DateList.TransactExcutionAsync(() =>
             {
-                var model = new DateModel();
+                DateList.Clear();
 
-                model.Base = collect.Base;
+                foreach (var collect in collectList)
+                {
+                    var model = new DateModel();
 
-                model.Start = collect.Events.Where(x => x.InstanceId == StartEventID).MinBy(y => y.TimeWritten)?.TimeWritten;
+                    model.Base = collect.Base;
 
-                model.End = collect.Events.Where(x => x.InstanceId == EndEventID).MaxBy(y => y.TimeWritten)?.TimeWritten;
+                    model.Start = collect.Events.Where(x => x.InstanceId == StartEventID).MinBy(y => y.TimeWritten)?.TimeWritten;
 
-                SetView(model);
+                    model.End = collect.Events.Where(x => x.InstanceId == EndEventID).MaxBy(y => y.TimeWritten)?.TimeWritten;
 
-                DateList.Add(model);
-            }
+                    SetView(model);
+
+                    DateList.Add(model);
+                }
+            });
 
             TableVisibility.Value = Visibility.Visible;
         }
