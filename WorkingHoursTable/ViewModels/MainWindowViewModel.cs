@@ -15,6 +15,7 @@ using System.Windows;
 using System.Reactive.Linq;
 using System.Windows.Documents;
 using System.Windows.Data;
+using System.Collections;
 
 namespace WorkingHoursTable.ViewModels
 {
@@ -48,6 +49,8 @@ namespace WorkingHoursTable.ViewModels
         public ReactiveCommand ClipboardCommand { get; } = new ReactiveCommand();
         public ReactiveCommand RefleshCommand { get; } = new ReactiveCommand();
         public IDialogCoordinator? MahAppsDialogCoordinator { get; set; }
+        private Dictionary<Tuple<int, int>, IEnumerable<EventLogEntry>> _Cache = new Dictionary<Tuple<int, int>, IEnumerable<EventLogEntry>>();
+
         public MainWindowViewModel()
         {
             // 複数スレッドからコレクション操作できるようにする
@@ -109,7 +112,44 @@ namespace WorkingHoursTable.ViewModels
                 }
             });
         }
+        private async Task<IEnumerable<EventLogEntry>> GetYearMonthList(int year, int month)
+        {
+            var key = Tuple.Create(year, month);
+            if (_Cache.ContainsKey(key))
+            {
+                return _Cache[key];
+            }
 
+            var result = new List<EventLogEntry>();
+
+            await Task.Run(() =>
+            {
+                // 取得するイベントログ名
+                var logName = "System";
+                // コンピュータ名（"."はローカルコンピュータ）
+                var machineName = ".";
+
+                var idList = new List<long>() { StartEventID, EndEventID };
+
+                // 指定したイベントログが存在しているか調べる
+                if (EventLog.Exists(logName, machineName))
+                {
+                    // EventLogオブジェクトを作成する
+                    using (var log = new EventLog(logName, machineName))
+                    {
+                        // ログエントリをすべて取得する
+                        result = log.Entries.OfType<EventLogEntry>()
+                            .Where(x => x.TimeWritten.Year == year && x.TimeWritten.Month == month && idList.Contains(x.InstanceId)).ToList();
+
+                    }
+                }
+            });
+
+            _Cache[key] = result;
+
+            return result;
+
+        }
         private async void SetTable(int year, int month)
         {
             TableVisibility.Value = Visibility.Hidden;
@@ -129,37 +169,18 @@ namespace WorkingHoursTable.ViewModels
                 collectList.Add(collect);
             }
 
-            await Task.Run(() =>
+            var list = await GetYearMonthList(year, month);
+
+            // ログエントリをすべて取得する
+            foreach (var entry in list)
             {
-                // 取得するイベントログ名
-                var logName = "System";
-                // コンピュータ名（"."はローカルコンピュータ）
-                var machineName = ".";
+                var first = collectList.Where(x => x.Start <= entry.TimeWritten && entry.TimeWritten <= x.End).FirstOrDefault();
 
-                var idList = new List<long>() { StartEventID, EndEventID };
-
-                // 指定したイベントログが存在しているか調べる
-                if (EventLog.Exists(logName, machineName))
+                if (first != null)
                 {
-                    // EventLogオブジェクトを作成する
-                    var log = new EventLog(logName, machineName);
-
-                    // ログエントリをすべて取得する
-                    foreach (var entry in log.Entries.OfType<EventLogEntry>()
-                        .Where(x => x.TimeWritten.Year == year && x.TimeWritten.Month == month && idList.Contains(x.InstanceId)))
-                    {
-                        var first = collectList.Where(x => x.Start <= entry.TimeWritten && entry.TimeWritten <= x.End).FirstOrDefault();
-
-                        if (first != null)
-                        {
-                            first.Events.Add(entry);
-                        }
-                    }
-
-                    //閉じる
-                    log.Close();
+                    first.Events.Add(entry);
                 }
-            });
+            }
 
             await DateList.TransactExcutionAsync(() =>
             {
